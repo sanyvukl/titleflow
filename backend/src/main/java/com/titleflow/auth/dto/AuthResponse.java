@@ -1,4 +1,4 @@
-package com.titleflow.auth;
+package com.titleflow.auth.dto;
 
 public record AuthResponse(
         String tokenType,

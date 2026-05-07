@@ -1,4 +1,4 @@
-package com.titleflow.auth;
+package com.titleflow.auth.dto;
 
 import com.titleflow.user.RoleName;
 import jakarta.validation.constraints.Email;

@@ -1,5 +1,9 @@
 package com.titleflow.auth;
 
+import com.titleflow.auth.dto.AuthResponse;
+import com.titleflow.auth.dto.CurrentUserResponse;
+import com.titleflow.auth.dto.LoginRequest;
+import com.titleflow.auth.dto.RegisterRequest;
 import com.titleflow.user.Role;
 import com.titleflow.user.RoleName;
 import com.titleflow.user.RoleRepository;
