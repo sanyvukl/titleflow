@@ -87,12 +87,72 @@ public class TitleApplication {
     }
 
     public void submit() {
+        requireStatus(
+                TitleApplicationStatus.DRAFT,
+                "Only draft applications can be submitted"
+        );
+
         this.status = TitleApplicationStatus.SUBMITTED;
         this.submittedAt = LocalDateTime.now();
     }
 
+    public void startReview() {
+        requireStatus(
+                TitleApplicationStatus.SUBMITTED,
+                "Only submitted applications can be moved under review"
+        );
+
+        this.status = TitleApplicationStatus.UNDER_REVIEW;
+    }
+
+    public void requestMoreInfo() {
+        requireStatus(
+                TitleApplicationStatus.UNDER_REVIEW,
+                "Only applications under review can request more information"
+        );
+
+        this.status = TitleApplicationStatus.NEEDS_MORE_INFO;
+    }
+
+    public void approve() {
+        requireStatus(
+                TitleApplicationStatus.UNDER_REVIEW,
+                "Only applications under review can be approved"
+        );
+
+        this.status = TitleApplicationStatus.APPROVED;
+        this.reviewedAt = LocalDateTime.now();
+    }
+
+    public void reject() {
+        requireStatus(
+                TitleApplicationStatus.UNDER_REVIEW,
+                "Only applications under review can be rejected"
+        );
+
+        this.status = TitleApplicationStatus.REJECTED;
+        this.reviewedAt = LocalDateTime.now();
+    }
+
     public boolean isDraft() {
         return this.status == TitleApplicationStatus.DRAFT;
+    }
+
+    public boolean isSubmitted() {
+        return this.status == TitleApplicationStatus.SUBMITTED;
+    }
+
+    public boolean isUnderReview() {
+        return this.status == TitleApplicationStatus.UNDER_REVIEW;
+    }
+
+    private void requireStatus(
+            TitleApplicationStatus requiredStatus,
+            String message
+    ) {
+        if (this.status != requiredStatus) {
+            throw new IllegalArgumentException(message);
+        }
     }
 
     public boolean belongsToDealer(Long dealerId) {

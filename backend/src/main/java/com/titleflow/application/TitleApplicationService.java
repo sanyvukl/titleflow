@@ -78,6 +78,80 @@ public class TitleApplicationService {
         return toResponse(application);
     }
 
+    @Transactional(readOnly = true)
+    public List<TitleApplicationResponse> getApplicationsForDmvReview() {
+        List<TitleApplicationStatus> reviewStatuses = List.of(
+                TitleApplicationStatus.SUBMITTED,
+                TitleApplicationStatus.UNDER_REVIEW,
+                TitleApplicationStatus.NEEDS_MORE_INFO
+        );
+
+        return titleApplicationRepository
+                .findByStatusInOrderByCreatedAtAsc(reviewStatuses)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TitleApplicationResponse getApplicationForDmvReview(Long applicationId) {
+        TitleApplication application = findApplicationById(applicationId);
+
+        return toResponse(application);
+    }
+
+    @Transactional
+    public TitleApplicationResponse startReview(Long applicationId, String dmvClerkEmail) {
+        findUserByEmail(dmvClerkEmail);
+
+        TitleApplication application = findApplicationById(applicationId);
+
+        application.startReview();
+
+        TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        return toResponse(savedApplication);
+    }
+
+    @Transactional
+    public TitleApplicationResponse requestMoreInfo(Long applicationId, String dmvClerkEmail) {
+        findUserByEmail(dmvClerkEmail);
+
+        TitleApplication application = findApplicationById(applicationId);
+
+        application.requestMoreInfo();
+
+        TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        return toResponse(savedApplication);
+    }
+
+    @Transactional
+    public TitleApplicationResponse approveApplication(Long applicationId, String dmvClerkEmail) {
+        findUserByEmail(dmvClerkEmail);
+
+        TitleApplication application = findApplicationById(applicationId);
+
+        application.approve();
+
+        TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        return toResponse(savedApplication);
+    }
+
+    @Transactional
+    public TitleApplicationResponse rejectApplication(Long applicationId, String dmvClerkEmail) {
+        findUserByEmail(dmvClerkEmail);
+
+        TitleApplication application = findApplicationById(applicationId);
+
+        application.reject();
+
+        TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        return toResponse(savedApplication);
+    }
+
     @Transactional
     public TitleApplicationResponse updateDraft(
             Long applicationId,
@@ -125,6 +199,11 @@ public class TitleApplicationService {
     private User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Current user not found"));
+    }
+
+    private TitleApplication findApplicationById(Long applicationId) {
+        return titleApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Title application not found"));
     }
 
     private Vehicle toVehicle(VehicleRequest request) {
