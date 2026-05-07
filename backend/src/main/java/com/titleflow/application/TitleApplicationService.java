@@ -3,6 +3,8 @@ package com.titleflow.application;
 import com.titleflow.application.dto.CreateTitleApplicationRequest;
 import com.titleflow.application.dto.TitleApplicationResponse;
 import com.titleflow.application.dto.UpdateTitleApplicationRequest;
+import com.titleflow.audit.AuditAction;
+import com.titleflow.audit.AuditLogService;
 import com.titleflow.owner.Owner;
 import com.titleflow.owner.OwnerType;
 import com.titleflow.owner.dto.OwnerRequest;
@@ -24,13 +26,15 @@ public class TitleApplicationService {
 
     private final TitleApplicationRepository titleApplicationRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     public TitleApplicationService(
             TitleApplicationRepository titleApplicationRepository,
-            UserRepository userRepository
+            UserRepository userRepository, AuditLogService auditLogService
     ) {
         this.titleApplicationRepository = titleApplicationRepository;
         this.userRepository = userRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -53,6 +57,15 @@ public class TitleApplicationService {
         );
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dealer,
+                AuditAction.APPLICATION_CREATED,
+                null,
+                savedApplication.getStatus().name(),
+                "Dealer created draft title application " + savedApplication.getApplicationNumber()
+        );
 
         return toResponse(savedApplication);
     }
@@ -102,52 +115,96 @@ public class TitleApplicationService {
 
     @Transactional
     public TitleApplicationResponse startReview(Long applicationId, String dmvClerkEmail) {
-        findUserByEmail(dmvClerkEmail);
+        User dmvClerk = findUserByEmail(dmvClerkEmail);
 
         TitleApplication application = findApplicationById(applicationId);
+
+        TitleApplicationStatus oldStatus = application.getStatus();
 
         application.startReview();
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dmvClerk,
+                AuditAction.REVIEW_STARTED,
+                oldStatus.name(),
+                savedApplication.getStatus().name(),
+                "DMV clerk started review for title application " + savedApplication.getApplicationNumber()
+        );
 
         return toResponse(savedApplication);
     }
 
     @Transactional
     public TitleApplicationResponse requestMoreInfo(Long applicationId, String dmvClerkEmail) {
-        findUserByEmail(dmvClerkEmail);
+        User dmvClerk = findUserByEmail(dmvClerkEmail);
 
         TitleApplication application = findApplicationById(applicationId);
+
+        TitleApplicationStatus oldStatus = application.getStatus();
 
         application.requestMoreInfo();
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dmvClerk,
+                AuditAction.MORE_INFO_REQUESTED,
+                oldStatus.name(),
+                savedApplication.getStatus().name(),
+                "DMV clerk requested more information for title application " + savedApplication.getApplicationNumber()
+        );
 
         return toResponse(savedApplication);
     }
 
     @Transactional
     public TitleApplicationResponse approveApplication(Long applicationId, String dmvClerkEmail) {
-        findUserByEmail(dmvClerkEmail);
+        User dmvClerk = findUserByEmail(dmvClerkEmail);
 
         TitleApplication application = findApplicationById(applicationId);
+
+        TitleApplicationStatus oldStatus = application.getStatus();
 
         application.approve();
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dmvClerk,
+                AuditAction.APPLICATION_APPROVED,
+                oldStatus.name(),
+                savedApplication.getStatus().name(),
+                "DMV clerk approved title application " + savedApplication.getApplicationNumber()
+        );
 
         return toResponse(savedApplication);
     }
 
     @Transactional
     public TitleApplicationResponse rejectApplication(Long applicationId, String dmvClerkEmail) {
-        findUserByEmail(dmvClerkEmail);
+        User dmvClerk = findUserByEmail(dmvClerkEmail);
 
         TitleApplication application = findApplicationById(applicationId);
+
+        TitleApplicationStatus oldStatus = application.getStatus();
 
         application.reject();
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dmvClerk,
+                AuditAction.APPLICATION_REJECTED,
+                oldStatus.name(),
+                savedApplication.getStatus().name(),
+                "DMV clerk rejected title application " + savedApplication.getApplicationNumber()
+        );
 
         return toResponse(savedApplication);
     }
@@ -174,6 +231,15 @@ public class TitleApplicationService {
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
 
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dealer,
+                AuditAction.APPLICATION_UPDATED,
+                savedApplication.getStatus().name(),
+                savedApplication.getStatus().name(),
+                "Dealer updated draft title application " + savedApplication.getApplicationNumber()
+        );
+
         return toResponse(savedApplication);
     }
 
@@ -189,9 +255,20 @@ public class TitleApplicationService {
             throw new IllegalArgumentException("Only draft applications can be submitted");
         }
 
+        TitleApplicationStatus oldStatus = application.getStatus();
+
         application.submit();
 
         TitleApplication savedApplication = titleApplicationRepository.save(application);
+
+        auditLogService.recordApplicationAction(
+                savedApplication,
+                dealer,
+                AuditAction.APPLICATION_SUBMITTED,
+                oldStatus.name(),
+                savedApplication.getStatus().name(),
+                "Dealer submitted title application " + savedApplication.getApplicationNumber()
+        );
 
         return toResponse(savedApplication);
     }
