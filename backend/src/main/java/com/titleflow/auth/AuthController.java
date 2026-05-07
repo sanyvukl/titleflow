@@ -1,5 +1,9 @@
 package com.titleflow.auth;
 
+import com.titleflow.auth.dto.AuthResponse;
+import com.titleflow.auth.dto.CurrentUserResponse;
+import com.titleflow.auth.dto.LoginRequest;
+import com.titleflow.auth.dto.RegisterRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
