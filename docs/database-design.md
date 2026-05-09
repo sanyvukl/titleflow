@@ -45,6 +45,7 @@ Role examples:
 - DEALER
 - DMV_CLERK
 - LENDER
+- DEVELOPER
 
 ## title_applications
 
