@@ -14,6 +14,8 @@ import DmvReviewPage from "./pages/dmvReview/DmvReviewPage";
 import DocumentsPage from "./pages/documents/DocumentsPage";
 import LiensPage from "./pages/liens/LiensPage";
 import TitleApplicationsPage from "./pages/titleApplications/TitleApplicationsPage";
+import TitleApplicationDetailsPage from "./pages/titleApplications/TitleApplicationDetailsPage";
+import CreateTitleApplicationPage from "./pages/titleApplications/CreateTitleApplicationPage";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute.tsx";
@@ -41,31 +43,20 @@ function App() {
                     <Route path="/dashboard" element={<DashboardPage />} />
 
                     <Route element={<RoleProtectedRoute allowedRoles={["DEALER"]} />}>
-                        <Route
-                            path="/dashboard/title-applications"
-                            element={<TitleApplicationsPage />}
-                        />
+                        <Route path="/dashboard/title-applications" element={<TitleApplicationsPage />} />
+                        <Route path="/dashboard/title-applications/:id" element={<TitleApplicationDetailsPage />} />
+                        <Route path="/dashboard/title-applications/new" element={<CreateTitleApplicationPage />} />
                     </Route>
 
                     <Route element={<RoleProtectedRoute allowedRoles={["DMV_CLERK"]} />}>
                         <Route path="/dashboard/dmv-review" element={<DmvReviewPage />} />
                     </Route>
 
-                    <Route
-                        element={
-                            <RoleProtectedRoute allowedRoles={["DEALER", "DMV_CLERK", "ADMIN"]} />
-                        }
-                    >
+                    <Route element={<RoleProtectedRoute allowedRoles={["DEALER", "DMV_CLERK", "ADMIN"]} />}>
                         <Route path="/dashboard/documents" element={<DocumentsPage />} />
                     </Route>
 
-                    <Route
-                        element={
-                            <RoleProtectedRoute
-                                allowedRoles={["LENDER", "DEALER", "DMV_CLERK", "ADMIN"]}
-                            />
-                        }
-                    >
+                    <Route element={<RoleProtectedRoute allowedRoles={["LENDER", "DEALER", "DMV_CLERK", "ADMIN"]} />}>
                         <Route path="/dashboard/liens" element={<LiensPage />} />
                     </Route>
 
