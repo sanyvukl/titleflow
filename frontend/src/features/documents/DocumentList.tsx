@@ -4,6 +4,7 @@ import {
     Alert,
     Box,
     Button,
+    Chip,
     Paper,
     Stack,
     Table,
@@ -14,6 +15,10 @@ import {
     TableRow,
     Typography,
 } from "@mui/material";
+
+import DownloadIcon from "@mui/icons-material/Download";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import { documentService } from "../../api/documentService";
 import { useAppSelector } from "../../store/hooks";
@@ -32,6 +37,13 @@ function formatFileSize(size: number): string {
     return `${(sizeInKb / 1024).toFixed(1)} MB`;
 }
 
+function formatDocumentType(type: string): string {
+    return type
+        .split("_")
+        .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+        .join(" ");
+}
+
 function canPreviewDocument(contentType: string): boolean {
     const normalizedContentType = contentType.toLowerCase();
 
@@ -41,15 +53,38 @@ function canPreviewDocument(contentType: string): boolean {
     );
 }
 
+function getFileKindLabel(contentType: string): string {
+    if (contentType === "application/pdf") {
+        return "PDF";
+    }
+
+    if (contentType.startsWith("image/")) {
+        return "Image";
+    }
+
+    return "File";
+}
+
+function getFileKindColor(
+    contentType: string
+): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" {
+    if (contentType === "application/pdf") {
+        return "error";
+    }
+
+    if (contentType.startsWith("image/")) {
+        return "info";
+    }
+
+    return "default";
+}
+
 function DocumentList({ applicationId }: DocumentListProps) {
     const { documents, error } = useAppSelector((state) => state.documents);
 
     const [previewError, setPreviewError] = useState<string | null>(null);
 
-    const handlePreview = async (
-        documentId: number,
-        contentType: string
-    ) => {
+    const handlePreview = async (documentId: number, contentType: string) => {
         setPreviewError(null);
 
         if (!canPreviewDocument(contentType)) {
@@ -106,133 +141,256 @@ function DocumentList({ applicationId }: DocumentListProps) {
     };
 
     return (
-        <Paper sx={{ p: 3 }}>
-            <Stack spacing={2}>
+        <Paper sx={{ overflow: "hidden" }}>
+            <Box
+                sx={{
+                    px: { xs: 3, md: 4 },
+                    py: 3,
+                    backgroundColor: "#F8FBFF",
+                    borderBottom: "1px solid #E2E8F0",
+                }}
+            >
                 <Stack
                     direction={{ xs: "column", sm: "row" }}
-                    spacing={1}
+                    spacing={2}
                     sx={{
                         justifyContent: "space-between",
                         alignItems: { xs: "flex-start", sm: "center" },
                     }}
                 >
-                    <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                            Uploaded Documents
-                        </Typography>
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                        <Box
+                            sx={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: "14px",
+                                display: "grid",
+                                placeItems: "center",
+                                backgroundColor: "#EEF5FF",
+                                color: "primary.main",
+                            }}
+                        >
+                            <InsertDriveFileIcon />
+                        </Box>
 
-                        <Typography variant="body2" color="text.secondary">
-                            Preview or download supporting application documents.
-                        </Typography>
-                    </Box>
+                        <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                                Uploaded Documents
+                            </Typography>
+
+                            <Typography variant="body2" color="text.secondary">
+                                Preview or download supporting application documents.
+                            </Typography>
+                        </Box>
+                    </Stack>
+
+                    <Chip
+                        label={`${documents.length} document${
+                            documents.length === 1 ? "" : "s"
+                        }`}
+                        color="primary"
+                        variant="outlined"
+                        sx={{ fontWeight: 800 }}
+                    />
                 </Stack>
+            </Box>
 
-                {error && <Alert severity="error">{error}</Alert>}
+            <Box sx={{ p: { xs: 3, md: 4 } }}>
+                <Stack spacing={2}>
+                    {error && <Alert severity="error">{error}</Alert>}
 
-                {previewError && (
-                    <Alert severity="warning">{previewError}</Alert>
-                )}
+                    {previewError && <Alert severity="warning">{previewError}</Alert>}
 
-                {documents.length === 0 ? (
-                    <Typography color="text.secondary">
-                        No documents have been uploaded for this application yet.
-                    </Typography>
-                ) : (
-                    <TableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Type</TableCell>
-                                    <TableCell>File Name</TableCell>
-                                    <TableCell>Size</TableCell>
-                                    <TableCell>Uploaded By</TableCell>
-                                    <TableCell>Uploaded At</TableCell>
-                                    <TableCell align="right">Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
+                    {documents.length === 0 ? (
+                        <Box
+                            sx={{
+                                p: 4,
+                                border: "1px dashed #C8D4E8",
+                                borderRadius: "18px",
+                                backgroundColor: "#F8FBFF",
+                                textAlign: "center",
+                            }}
+                        >
+                            <Stack spacing={1.5} sx={{ alignItems: "center" }}>
+                                <Box
+                                    sx={{
+                                        width: 58,
+                                        height: 58,
+                                        borderRadius: "20px",
+                                        display: "grid",
+                                        placeItems: "center",
+                                        backgroundColor: "#EEF5FF",
+                                        color: "primary.main",
+                                    }}
+                                >
+                                    <InsertDriveFileIcon fontSize="large" />
+                                </Box>
 
-                            <TableBody>
-                                {documents.map((uploadedDocument) => (
-                                    <TableRow key={uploadedDocument.id} hover>
-                                        <TableCell>
-                                            {uploadedDocument.documentType}
-                                        </TableCell>
+                                <Box>
+                                    <Typography sx={{ fontWeight: 800 }}>
+                                        No documents uploaded yet
+                                    </Typography>
 
-                                        <TableCell>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ fontWeight: 700 }}
-                                            >
-                                                {uploadedDocument.originalFileName}
-                                            </Typography>
-
-                                            <Typography
-                                                variant="caption"
-                                                color="text.secondary"
-                                            >
-                                                {uploadedDocument.contentType}
-                                            </Typography>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {formatFileSize(uploadedDocument.fileSize)}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {uploadedDocument.uploadedByEmail}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {new Date(
-                                                uploadedDocument.uploadedAt
-                                            ).toLocaleString()}
-                                        </TableCell>
-
-                                        <TableCell align="right">
-                                            <Stack
-                                                direction="row"
-                                                spacing={1}
-                                                sx={{ justifyContent: "flex-end" }}
-                                            >
-                                                <Button
-                                                    variant="outlined"
-                                                    size="small"
-                                                    disabled={
-                                                        !canPreviewDocument(
-                                                            uploadedDocument.contentType
-                                                        )
-                                                    }
-                                                    onClick={() =>
-                                                        handlePreview(
-                                                            uploadedDocument.id,
-                                                            uploadedDocument.contentType
-                                                        )
-                                                    }
-                                                >
-                                                    Preview
-                                                </Button>
-
-                                                <Button
-                                                    variant="outlined"
-                                                    size="small"
-                                                    onClick={() =>
-                                                        handleDownload(
-                                                            uploadedDocument.id,
-                                                            uploadedDocument.originalFileName
-                                                        )
-                                                    }
-                                                >
-                                                    Download
-                                                </Button>
-                                            </Stack>
-                                        </TableCell>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{ mt: 0.5 }}
+                                    >
+                                        Uploaded title copies, bills of sale, or supporting
+                                        files will appear here.
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                        </Box>
+                    ) : (
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Document</TableCell>
+                                        <TableCell>Type</TableCell>
+                                        <TableCell>Size</TableCell>
+                                        <TableCell>Uploaded By</TableCell>
+                                        <TableCell>Uploaded At</TableCell>
+                                        <TableCell align="right">Actions</TableCell>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                )}
-            </Stack>
+                                </TableHead>
+
+                                <TableBody>
+                                    {documents.map((uploadedDocument) => (
+                                        <TableRow
+                                            key={uploadedDocument.id}
+                                            hover
+                                            sx={{
+                                                "&:last-child td": {
+                                                    borderBottom: 0,
+                                                },
+                                            }}
+                                        >
+                                            <TableCell>
+                                                <Stack
+                                                    direction="row"
+                                                    spacing={1.5}
+                                                    sx={{ alignItems: "center" }}
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            width: 38,
+                                                            height: 38,
+                                                            borderRadius: "12px",
+                                                            display: "grid",
+                                                            placeItems: "center",
+                                                            backgroundColor: "#EEF5FF",
+                                                            color: "primary.main",
+                                                            flexShrink: 0,
+                                                        }}
+                                                    >
+                                                        <InsertDriveFileIcon fontSize="small" />
+                                                    </Box>
+
+                                                    <Box>
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{ fontWeight: 800 }}
+                                                        >
+                                                            {uploadedDocument.originalFileName}
+                                                        </Typography>
+                                                    </Box>
+                                                </Stack>
+                                            </TableCell>
+
+                                            <TableCell>
+                                                <Stack direction="row" spacing={1}>
+                                                    <Chip
+                                                        label={formatDocumentType(
+                                                            uploadedDocument.documentType
+                                                        )}
+                                                        size="small"
+                                                        variant="outlined"
+                                                        sx={{ fontWeight: 700 }}
+                                                    />
+
+                                                    <Chip
+                                                        label={getFileKindLabel(
+                                                            uploadedDocument.contentType
+                                                        )}
+                                                        size="small"
+                                                        color={getFileKindColor(
+                                                            uploadedDocument.contentType
+                                                        )}
+                                                        variant="outlined"
+                                                        sx={{ fontWeight: 700 }}
+                                                    />
+                                                </Stack>
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {formatFileSize(uploadedDocument.fileSize)}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                <Typography
+                                                    variant="body2"
+                                                    color="text.secondary"
+                                                >
+                                                    {uploadedDocument.uploadedByEmail}
+                                                </Typography>
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {new Date(
+                                                    uploadedDocument.uploadedAt
+                                                ).toLocaleString()}
+                                            </TableCell>
+
+                                            <TableCell align="right">
+                                                <Stack
+                                                    direction="row"
+                                                    spacing={1}
+                                                    sx={{ justifyContent: "flex-end" }}
+                                                >
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        startIcon={<VisibilityIcon />}
+                                                        disabled={
+                                                            !canPreviewDocument(
+                                                                uploadedDocument.contentType
+                                                            )
+                                                        }
+                                                        onClick={() =>
+                                                            handlePreview(
+                                                                uploadedDocument.id,
+                                                                uploadedDocument.contentType
+                                                            )
+                                                        }
+                                                    >
+                                                        Preview
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        startIcon={<DownloadIcon />}
+                                                        onClick={() =>
+                                                            handleDownload(
+                                                                uploadedDocument.id,
+                                                                uploadedDocument.originalFileName
+                                                            )
+                                                        }
+                                                    >
+                                                        Download
+                                                    </Button>
+                                                </Stack>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </Stack>
+            </Box>
         </Paper>
     );
 }
