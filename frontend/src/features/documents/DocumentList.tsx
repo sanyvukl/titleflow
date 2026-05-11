@@ -175,7 +175,7 @@ function DocumentList({ applicationId }: DocumentListProps) {
 
                         <Box>
                             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                                Uploaded Documents
+                                Documents
                             </Typography>
 
                             <Typography variant="body2" color="text.secondary">
