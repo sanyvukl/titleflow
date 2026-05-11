@@ -87,10 +87,12 @@ public class TitleApplication {
     }
 
     public void submit() {
-        requireStatus(
-                TitleApplicationStatus.DRAFT,
-                "Only draft applications can be submitted"
-        );
+        if (this.status != TitleApplicationStatus.DRAFT
+                && this.status != TitleApplicationStatus.NEEDS_MORE_INFO) {
+            throw new IllegalArgumentException(
+                    "Only DRAFT or NEEDS_MORE_INFO applications can be submitted"
+            );
+        }
 
         this.status = TitleApplicationStatus.SUBMITTED;
         this.submittedAt = LocalDateTime.now();
@@ -136,6 +138,11 @@ public class TitleApplication {
 
     public boolean isDraft() {
         return this.status == TitleApplicationStatus.DRAFT;
+    }
+
+    public boolean canDealerModify() {
+        return this.status == TitleApplicationStatus.DRAFT
+                || this.status == TitleApplicationStatus.NEEDS_MORE_INFO;
     }
 
     public boolean isSubmitted() {

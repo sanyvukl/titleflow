@@ -221,8 +221,10 @@ public class TitleApplicationService {
                 .findByIdAndDealerId(applicationId, dealer.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Title application not found"));
 
-        if (!application.isDraft()) {
-            throw new IllegalArgumentException("Only draft applications can be updated");
+        if (!application.canDealerModify()) {
+            throw new IllegalArgumentException(
+                    "Only DRAFT or NEEDS_MORE_INFO applications can be updated"
+            );
         }
 
         application.setVehicle(toVehicle(request.vehicle()));
@@ -251,8 +253,10 @@ public class TitleApplicationService {
                 .findByIdAndDealerId(applicationId, dealer.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Title application not found"));
 
-        if (!application.isDraft()) {
-            throw new IllegalArgumentException("Only draft applications can be submitted");
+        if (!application.canDealerModify()) {
+            throw new IllegalArgumentException(
+                    "Only DRAFT or NEEDS_MORE_INFO applications can be submitted"
+            );
         }
 
         TitleApplicationStatus oldStatus = application.getStatus();
@@ -267,7 +271,9 @@ public class TitleApplicationService {
                 AuditAction.APPLICATION_SUBMITTED,
                 oldStatus.name(),
                 savedApplication.getStatus().name(),
-                "Dealer submitted title application " + savedApplication.getApplicationNumber()
+                oldStatus == TitleApplicationStatus.NEEDS_MORE_INFO
+                        ? "Dealer resubmitted title application " + savedApplication.getApplicationNumber()
+                        : "Dealer submitted title application " + savedApplication.getApplicationNumber()
         );
 
         return toResponse(savedApplication);
@@ -415,4 +421,5 @@ public class TitleApplicationService {
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }
+
 }
