@@ -19,8 +19,10 @@ import type { SelectChangeEvent } from "@mui/material/Select";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import LockIcon from "@mui/icons-material/Lock";
+import DeleteIcon from "@mui/icons-material/Delete";
 
-import { uploadDocument } from "./documentSlice";
+import { uploadDocument, fetchDocuments } from "./documentSlice";
+import { fetchAuditLogs } from "../auditLogs/auditLogsSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 
 import type { DocumentType } from "../../types/documentTypes";
@@ -122,6 +124,15 @@ function DocumentUpload({ applicationId, canUpload }: DocumentUploadProps) {
         setFile(selectedFile);
     };
 
+    const handleClearSelectedFile = () => {
+        setFile(null);
+        setLocalError(null);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
 
@@ -145,6 +156,9 @@ function DocumentUpload({ applicationId, canUpload }: DocumentUploadProps) {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
+
+            await dispatch(fetchDocuments(applicationId));
+            await dispatch(fetchAuditLogs(applicationId));
         }
     };
 
@@ -301,7 +315,7 @@ function DocumentUpload({ applicationId, canUpload }: DocumentUploadProps) {
                             </Box>
 
                             <Button variant="outlined" component="label">
-                                Choose File
+                                {file ? "Replace File" : "Choose File"}
                                 <input
                                     ref={fileInputRef}
                                     hidden
@@ -343,12 +357,29 @@ function DocumentUpload({ applicationId, canUpload }: DocumentUploadProps) {
                                     </Box>
                                 </Stack>
 
-                                <Chip
-                                    label={formatDocumentType(documentType)}
-                                    size="small"
-                                    color="primary"
-                                    variant="outlined"
-                                />
+                                <Stack
+                                    direction={{ xs: "column", sm: "row" }}
+                                    spacing={1}
+                                    sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
+                                >
+                                    <Chip
+                                        label={formatDocumentType(documentType)}
+                                        size="small"
+                                        color="primary"
+                                        variant="outlined"
+                                    />
+
+                                    <Button
+                                        type="button"
+                                        size="small"
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<DeleteIcon />}
+                                        onClick={handleClearSelectedFile}
+                                    >
+                                        Remove
+                                    </Button>
+                                </Stack>
                             </Stack>
                         </Paper>
                     )}

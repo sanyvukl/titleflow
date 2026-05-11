@@ -36,6 +36,8 @@ import AuditLogList from "../../features/auditLogs/AuditLogList";
 import DocumentList from "../../features/documents/DocumentList";
 import DocumentUpload from "../../features/documents/DocumentUpload";
 
+import { downloadGeneratedTitlePdf } from "../../utils/generatedTitlePdf";
+
 import {
     fetchApplicationById,
     submitTitleApplication,
@@ -404,12 +406,16 @@ function TitleApplicationDetailsPage() {
             return;
         }
 
-        await dispatch(
+        const updateResult = await dispatch(
             updateTitleApplication({
                 applicationId: selectedApplication.id,
                 request,
             })
         );
+
+        if (updateTitleApplication.fulfilled.match(updateResult)) {
+            dispatch(fetchAuditLogs(selectedApplication.id));
+        }
     };
 
     const handleSubmitApplication = async () => {
@@ -438,7 +444,14 @@ function TitleApplicationDetailsPage() {
             return;
         }
 
-        await dispatch(submitTitleApplication(selectedApplication.id));
+        const submitResult = await dispatch(
+            submitTitleApplication(selectedApplication.id)
+        );
+
+        if (submitTitleApplication.fulfilled.match(submitResult)) {
+            dispatch(fetchApplicationById(selectedApplication.id));
+            dispatch(fetchAuditLogs(selectedApplication.id));
+        }
     };
 
     if (isLoading && !selectedApplication) {
@@ -460,6 +473,7 @@ function TitleApplicationDetailsPage() {
     }
 
     const statusLabel = selectedApplication.status;
+    const canGenerateTitle = selectedApplication.status === "APPROVED";
 
     return (
         <Box>
@@ -506,6 +520,24 @@ function TitleApplicationDetailsPage() {
                 <Alert severity="warning" sx={{ mb: 3 }}>
                     DMV requested more information. Save your changes and resubmit the
                     application when the missing information is ready.
+                </Alert>
+            )}
+
+            {canGenerateTitle && (
+                <Alert
+                    severity="success"
+                    sx={{ mb: 3 }}
+                    action={
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={() => downloadGeneratedTitlePdf(selectedApplication)}
+                        >
+                            Generate Title PDF
+                        </Button>
+                    }
+                >
+                    This application has been approved. You can now generate the title certificate.
                 </Alert>
             )}
 
@@ -641,8 +673,13 @@ function StatusBanner({
                     >
                         <Chip
                             label={formatStatus(status)}
-                            color={getStatusColor(status)}
-                            sx={{ fontWeight: 800 }}
+                            color={status === "DRAFT" ? undefined : getStatusColor(status)}
+                            sx={{
+                                fontWeight: 800,
+                                color: status === "DRAFT" ? "#0B2545" : undefined,
+                                backgroundColor: status === "DRAFT" ? "#E2E8F0" : undefined,
+                                border: status === "DRAFT" ? "1px solid #CBD5E1" : undefined,
+                            }}
                         />
 
                         {submittedAt && (
